@@ -6,7 +6,7 @@ st.title("📊 Range Finder - Playbook Generator")
 
 # Sidebar
 st.sidebar.header("📂 CSV File Upload")
-num_instruments = st.sidebar.number_input("Number of Instruments", 1, 10, 1)
+num_instruments = st.sidebar.number_input("Number of Instruments", 1, 10, 3)
 timeframes = ["1 Year", "6 Months", "3 Months", "1 Month"]
 
 instrument_data, instrument_labels = {}, {}
@@ -77,7 +77,10 @@ for instrument, data in instrument_data.items():
             filtered_df = filtered_df[filtered_df["Risk_Level"] == risk_filter]
 
         filtered_df.insert(0, "Instrument", instrument)
-        filtered_df = filtered_df.drop(columns=["AvgMAE_x", "AvgMAE_y", "AvgRangePerc_x", "AvgRangePerc_y", "MAE_Range_Ratio_1M"], errors="ignore")
+        filtered_df = filtered_df[[
+            "Instrument", "Date", "RangeStart", "RangeEnd", "AvgMAE_1M", "AvgMAE_3M", "AvgRangePerc_1M", "AvgRangePerc_3M", 
+            "Strike_1M", "Strike_3M", "Strike_6M", "Strike_1Y", "Weighted_Strike", "Risk_Level"
+        ]]
         combined_data.append(filtered_df)
 
         st.subheader(f"{instrument}")
