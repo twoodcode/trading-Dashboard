@@ -30,13 +30,12 @@ for i in range(1, num_instruments + 1):
 st.subheader("📖 Playbook Generator")
 
 # Filters
-col1, col2, col3 = st.columns([1, 1, 1])
+col1, col2 = st.columns([1, 1])
 with col1:
     min_strike_rate = st.number_input("Min Strike Rate", min_value=0, max_value=100, value=75, step=1)
 with col2:
     max_strike_rate = st.number_input("Max Strike Rate", min_value=0, max_value=100, value=100, step=1)
-with col3:
-    risk_filter = st.selectbox("Risk Level", ["All", "Low", "Moderate", "High"])
+risk_filter = st.radio("Risk Level", ["All", "Low", "Moderate", "High"], horizontal=True)
 
 combined_data = []
 
@@ -61,15 +60,16 @@ for instrument, data in instrument_data.items():
         weights = {"Strike_1M": 0.1, "Strike_3M": 0.2, "Strike_6M": 0.3, "Strike_1Y": 0.4}
         merged_df["Weighted_Strike"] = sum(merged_df[col].fillna(0) * weight for col, weight in weights.items())
 
-        # MAE vs Range Ratio & Risk Level
-        merged_df["MAE_Range_Ratio_1M"] = (merged_df["AvgMAE_1M"] / merged_df["AvgRangePerc_1M"]) * 100
+        # Risk Score Calculation (Converted to Percentage)
+        merged_df["Risk_Score"] = ((merged_df["AvgMAE_1M"].fillna(0) / merged_df["AvgRangePerc_1M"].fillna(1)) * 100 * 0.4 +
+                                    (merged_df["AvgMAE_3M"].fillna(0) / merged_df["AvgRangePerc_3M"].fillna(1)) * 100 * 0.3)
 
         def risk_level(x):
             if x < 80: return "Low"
             if x <= 120: return "Moderate"
             return "High"
 
-        merged_df["Risk_Level"] = merged_df["MAE_Range_Ratio_1M"].apply(risk_level)
+        merged_df["Risk_Level"] = merged_df["Risk_Score"].apply(risk_level)
 
         # Apply Filters
         filtered_df = merged_df[(merged_df["Weighted_Strike"] >= min_strike_rate) & (merged_df["Weighted_Strike"] <= max_strike_rate)]
@@ -79,7 +79,7 @@ for instrument, data in instrument_data.items():
         filtered_df.insert(0, "Instrument", instrument)
         filtered_df = filtered_df[[
             "Instrument", "Date", "RangeStart", "RangeEnd", "AvgMAE_1M", "AvgMAE_3M", "AvgRangePerc_1M", "AvgRangePerc_3M", 
-            "Strike_1M", "Strike_3M", "Strike_6M", "Strike_1Y", "Weighted_Strike", "Risk_Level"
+            "Strike_1M", "Strike_3M", "Strike_6M", "Strike_1Y", "Weighted_Strike", "Risk_Score", "Risk_Level"
         ]]
         combined_data.append(filtered_df)
 
